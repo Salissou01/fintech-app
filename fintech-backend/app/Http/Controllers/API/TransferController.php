@@ -13,23 +13,23 @@ class TransferController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'receiver_email' => 'required|email|exists:users,email',
+            'receiver_phone' => 'required|string|exists:users,phone',
             'amount'         => 'required|numeric|min:1',
             'note'           => 'nullable|string',
         ]);
 
         $sender = $request->user();
-        $receiver = User::where('email', $request->receiver_email)->first();
+        $receiver = User::where('phone', $request->receiver_phone)->first();
 
         if ($receiver->id === $sender->id) {
-            return response()->json(['message' => 'You cannot transfer to yourself'], 400);
+            return response()->json(['message' => 'Vous ne pouvez pas vous transférer à vous-même'], 400);
         }
 
         $amount = $request->amount;
 
         // Vérifier solde suffisant
         if ($sender->wallet->balance < $amount) {
-            return response()->json(['message' => 'Insufficient balance'], 400);
+            return response()->json(['message' => 'Solde insuffisant'], 400);
         }
 
         // Débiter l'expéditeur
@@ -48,33 +48,34 @@ class TransferController extends Controller
             'note'        => $request->note
         ]);
 
-        // Ajouter transaction debit pour l'expéditeur
+        // Ajouter transaction débit pour l'expéditeur
         $sender->transactions()->create([
-            'type' => 'debit',
-            'amount' => $amount,
-            'description' => 'Transfert vers ' . $receiver->email
+            'type'        => 'debit',
+            'amount'      => $amount,
+            'description' => 'Transfert vers ' . $receiver->prenom . ' (' . $receiver->phone . ')'
         ]);
 
         // Ajouter transaction crédit pour le destinataire
         $receiver->transactions()->create([
-            'type' => 'credit',
-            'amount' => $amount,
-            'description' => 'Transfert reçu de ' . $sender->email
+            'type'        => 'credit',
+            'amount'      => $amount,
+            'description' => 'Transfert reçu de ' . $sender->prenom . ' (' . $sender->phone . ')'
         ]);
+
         // Ajouter notification à l'expéditeur
         $sender->notifications()->create([
-            'title' => 'Transfert effectué',
-            'message' => "Vous avez envoyé {$amount} FCFA à {$receiver->email}"
+            'title'   => 'Transfert effectué',
+            'message' => "Vous avez envoyé {$amount} FCFA à {$receiver->prenom} ({$receiver->phone})"
         ]);
 
         // Ajouter notification au destinataire
         $receiver->notifications()->create([
-            'title' => 'Virement reçu',
-            'message' => "Vous avez reçu {$amount} FCFA de {$sender->email}"
+            'title'   => 'Virement reçu',
+            'message' => "Vous avez reçu {$amount} FCFA de {$sender->prenom} ({$sender->phone})"
         ]);
 
         return response()->json([
-            'message' => 'Transfer successful',
+            'message'  => 'Transfert réussi',
             'transfer' => $transfer
         ]);
     }

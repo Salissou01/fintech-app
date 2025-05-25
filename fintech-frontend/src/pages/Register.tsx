@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
-  IonButton, IonItem, IonLabel, IonToast, IonText, IonLoading, IonInput
+  IonButton, IonItem, IonLabel, IonToast, IonText, IonLoading, IonInput, IonModal
 } from '@ionic/react';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { useHistory } from 'react-router-dom';
 import API from '../services/api';
+import Lottie from 'lottie-react';
+import successAnimation from '../assets/lottie/success.json';
 
 const Register: React.FC = () => {
   const history = useHistory();
@@ -15,6 +17,7 @@ const Register: React.FC = () => {
   const [selfie, setSelfie] = useState<File>();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleFileImport = (callback: (file: File) => void) => {
     const input = document.createElement('input');
@@ -51,10 +54,15 @@ const Register: React.FC = () => {
 
     try {
       setLoading(true);
-      const res = await API.post('/biometric-register', formData, {
+      await API.post('/biometric-register', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      history.replace('/login');
+
+      setShowSuccessModal(true); 
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        history.replace('/login');
+      }, 3000); 
     } catch (err: any) {
       console.error("Erreur API register :", err.response?.data || err.message);
       setError("Échec de l’inscription.");
@@ -124,6 +132,23 @@ const Register: React.FC = () => {
 
         <IonToast isOpen={!!error} message={error} duration={3000} onDidDismiss={() => setError('')} />
         <IonLoading isOpen={loading} message="Inscription en cours..." />
+
+       
+        <IonModal isOpen={showSuccessModal} className="modal-lottie" backdropDismiss={false}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100%',
+            padding: '20px',
+            textAlign: 'center'
+          }}>
+            <Lottie animationData={successAnimation} style={{ width: 200, height: 200 }} />
+            <h2 style={{ color: 'green' }}>Inscription réussie 🎉</h2>
+            <p>Redirection vers la connexion...</p>
+          </div>
+        </IonModal>
       </IonContent>
     </IonPage>
   );

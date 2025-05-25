@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://192.168.1.67:8000/api', // Ton backend Laravel
+  baseURL: 'http://192.168.1.61:8000/api', 
 });
 
 export const setAuthToken = (token: string | null) => {

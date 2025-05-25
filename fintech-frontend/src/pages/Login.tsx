@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
-  IonButton, IonToast, IonText, IonLoading
+  IonButton, IonToast, IonText, IonLoading, IonModal
 } from '@ionic/react';
-import API, { setAuthToken } from '../services/api';
 import { useHistory } from 'react-router-dom';
+import API, { setAuthToken } from '../services/api';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import Lottie from 'lottie-react';
+import successAnimation from '../assets/lottie/success.json';
+import errorAnimation from '../assets/lottie/error.json'; 
 
 const Login: React.FC = () => {
   const history = useHistory();
@@ -13,6 +16,8 @@ const Login: React.FC = () => {
   const [selfie, setSelfie] = useState<File>();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false); // 🔴
 
   const handleFileImport = (callback: (file: File) => void) => {
     const input = document.createElement('input');
@@ -50,13 +55,20 @@ const Login: React.FC = () => {
       const res = await API.post('/biometric-login', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
+
       const token = res.data.token;
       localStorage.setItem('token', token);
       setAuthToken(token);
-      history.replace('/dashboard');
+
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        history.replace('/dashboard');
+      }, 3000);
     } catch (err: any) {
       console.error("Erreur API login :", err.response?.data || err.message);
-      setError("Échec de l’authentification.");
+      setShowErrorModal(true); 
+      setTimeout(() => setShowErrorModal(false), 3000);
     } finally {
       setLoading(false);
     }
@@ -84,6 +96,7 @@ const Login: React.FC = () => {
             alt="login"
             style={{ width: '100%', maxWidth: '180px', marginBottom: '20px' }}
           />
+
           <IonText color="primary">
             <h2>Bienvenue 👋</h2>
             <p>Connectez-vous avec votre pièce d'identité</p>
@@ -112,6 +125,40 @@ const Login: React.FC = () => {
 
         <IonToast isOpen={!!error} message={error} duration={3000} onDidDismiss={() => setError('')} />
         <IonLoading isOpen={loading} message="Connexion en cours..." />
+
+    
+        <IonModal isOpen={showSuccessModal} className="modal-lottie" backdropDismiss={false}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100%',
+            padding: '20px',
+            textAlign: 'center'
+          }}>
+            <Lottie animationData={successAnimation} style={{ width: 200, height: 200 }} />
+            <h2 style={{ color: 'green' }}>Connexion réussie ✅</h2>
+            <p>Redirection vers le tableau de bord...</p>
+          </div>
+        </IonModal>
+
+        
+        <IonModal isOpen={showErrorModal} className="modal-lottie" backdropDismiss={false}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100%',
+            padding: '20px',
+            textAlign: 'center'
+          }}>
+            <Lottie animationData={errorAnimation} style={{ width: 200, height: 200 }} />
+            <h2 style={{ color: 'red' }}>Échec de la connexion ❌</h2>
+            <p>Vérifiez vos documents et réessayez.</p>
+          </div>
+        </IonModal>
       </IonContent>
     </IonPage>
   );

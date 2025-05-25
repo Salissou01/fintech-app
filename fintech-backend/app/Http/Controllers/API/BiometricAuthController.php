@@ -101,7 +101,7 @@ class BiometricAuthController extends Controller
         if (!empty($faceResult['FaceMatches']) && $faceResult['FaceMatches'][0]['Similarity'] > 85) {
             $user = User::create([
                 'email'            => $request->email,
-                'phone'            => $request->phone, // 🔄 passé via formulaire
+                'phone'            => $request->phone, 
                 'nom'              => $nom,
                 'prenom'           => $prenom,
                 'date_naissance'   => $dateNaissance,

@@ -36,16 +36,17 @@ class TopupController extends Controller
         $wallet = $user->wallet;
         $wallet->balance += $request->amount;
         $wallet->save();
+        $user->notifications()->create([
+        'title' => 'Recharge réussie',
+        'message' => "Votre compte a été rechargé de {$request->amount} FCFA via {$request->provider}"
+        ]);
 
         return response()->json([
             'message' => 'Recharge successful',
             'topup'   => $topup,
             'new_balance' => $wallet->balance
         ]);
-        $user->notifications()->create([
-        'title' => 'Recharge réussie',
-        'message' => "Votre compte a été rechargé de {$request->amount} FCFA via {$request->provider}"
-        ]);
+
 
     }
 }
